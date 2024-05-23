@@ -1,2 +1,2 @@
 # spotgone
-wdmvv/spot-on but in go
+wdmvv/spot-on but in go because prev version sucks!
