@@ -52,29 +52,31 @@ type Playlist struct {
 type playlistResponse struct {
 	Total int `json:"total"`
 	Items []struct {
-		Track struct {
-			Album struct {
-				Images []struct {
-					URL    string `json:"url"`
-					Height int    `json:"height"`
-					Width  int    `json:"width"`
-				} `json:"images"`
-				Name    string `json:"name"`
-				Release string `json:"release_date"`
-				Artists []struct {
-					Name string `json:"name"`
-				} `json:"artists"`
-			} `json:"album"`
-			Artists []struct {
-				Name string `json:"name"`
-			} `json:"artists"`
-			Disc       int    `json:"disc_number"`
-			DurationMs int    `json:"duration_ms"`
-			Name       string `json:"name"`
-			Number     int    `json:"track_number"`
-			Popularity int    `json:"popularity"`
-		} `json:"track"`
+		Tracks PlaylistTrack `json:"track"`
 	} `json:"items"`
+}
+
+type PlaylistTrack struct {
+	Album struct {
+		Images []struct {
+			URL    string `json:"url"`
+			Height int    `json:"height"`
+			Width  int    `json:"width"`
+		} `json:"images"`
+		Name    string `json:"name"`
+		Release string `json:"release_date"`
+		Artists []struct {
+			Name string `json:"name"`
+		} `json:"artists"`
+	} `json:"album"`
+	Artists []struct {
+		Name string `json:"name"`
+	} `json:"artists"`
+	Disc       int    `json:"disc_number"`
+	DurationMs int    `json:"duration_ms"`
+	Name       string `json:"name"`
+	Number     int    `json:"track_number"`
+	Popularity int    `json:"popularity"`
 }
 
 // this should be in some kind of config but eh
@@ -169,6 +171,7 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 	if err != nil {
 		return Playlist{}, err
 	}
+
 	req.Header.Add("Authorization", "Bearer "+u.AuthToken)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -176,11 +179,45 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 	} else if resp.StatusCode != http.StatusOK {
 		return Playlist{}, &ErrBadRequest{"playlist", resp.StatusCode}
 	}
+
 	d := json.NewDecoder(resp.Body)
 	var pl playlistResponse
+	var tracks []PlaylistTrack
 	err = d.Decode(&pl)
 	if err != nil {
 		return Playlist{}, err
+	}
+	tracks = append(tracks, pl.Items)
+	if pl.Total > 50 {
+		g := 0
+		if pl.Total%50 > 0 {
+			g = 1
+		}
+		for i := 0; i < pl.Total/50+g; i++ {
+			// now that i am reusing code twice (kind of) in two functions i think i shouldve made a function for these requests
+			// but i do not think this would look good or be usable enough or understandable
+			// go go infinite lines file
+			url = fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks?offset=%d&limit=50", id, i*50)
+			req, err := http.NewRequest(http.MethodGet, url, nil)
+			if err != nil {
+				return Playlist{}, err
+			}
+			req.Header.Add("Authorization", "Bearer "+u.AuthToken)
+			resp, err := http.DefaultClient.Do(req)
+
+			if err != nil {
+				return Playlist{}, err
+			} else if resp.StatusCode != http.StatusOK {
+				return Playlist{}, &ErrBadRequest{"playlist", resp.StatusCode}
+			}
+
+			d = json.NewDecoder(resp.Body)
+			var pl playlistResponse
+			err = d.Decode(&pl)
+			if err != nil {
+				return Playlist{}, err
+			}
+		}
 	}
 	return Playlist{}, nil
 }
