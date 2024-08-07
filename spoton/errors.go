@@ -2,10 +2,17 @@ package spoton
 
 import "fmt"
 
-type ErrBadAuth struct {
-	code int
+type ErrBadRequest struct {
+	reqtype string
+	code    int
 }
 
-func (e *ErrBadAuth) Error() string {
-	return fmt.Sprintf("bad auth token response, got code %d, 200 expected", e.code)
+func (e *ErrBadRequest) Error() string {
+	return fmt.Sprintf("bad %s request, got code %d, 200 expected", e.reqtype, e.code)
+}
+
+type ErrNoAuth struct{}
+
+func (e *ErrNoAuth) Error() string {
+	return "auth token is empty - have you called SetAuth previously?"
 }
