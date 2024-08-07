@@ -7,6 +7,10 @@
 *.out
 go.work
 go.work.sum
-.env
+
+env.json
 
 .DS_Store
+
+# temp ignore since i am testing stuff
+main.go
