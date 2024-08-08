@@ -43,17 +43,22 @@ type Track struct {
 	} `json:"album"`
 }
 
-type Playlist struct {
-}
-
 // i have no idea how to do this efficiently so almost same structs /shrug
 // this one is for processing response while capital one is for storing tracks only
 // ill see how this turns out to be and maybe will tweak stuff, who knows
 type playlistResponse struct {
 	Total int `json:"total"`
 	Items []struct {
-		Tracks PlaylistTrack `json:"track"`
+		Track PlaylistTrack `json:"track"`
 	} `json:"items"`
+}
+
+// i couldve used playlistResponse but i dont think thats a good idea
+// wouldve used if it(json response) was not decoded like this
+
+type Playlist struct {
+	Total  int
+	Tracks []PlaylistTrack
 }
 
 type PlaylistTrack struct {
@@ -187,7 +192,11 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 	if err != nil {
 		return Playlist{}, err
 	}
-	tracks = append(tracks, pl.Items)
+
+	for _, j := range pl.Items {
+		tracks = append(tracks, j.Track)
+	}
+
 	if pl.Total > 50 {
 		g := 0
 		if pl.Total%50 > 0 {
@@ -217,7 +226,12 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 			if err != nil {
 				return Playlist{}, err
 			}
+			for _, j := range pl.Items {
+				tracks = append(tracks, j.Track)
+			}
+
 		}
 	}
-	return Playlist{}, nil
+
+	return Playlist{pl.Total, tracks}, nil
 }
