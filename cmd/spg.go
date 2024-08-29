@@ -16,7 +16,7 @@ func CmdArgs() error {
 		return fmt.Errorf("error: download id must not be empty")
 	}
 	// TODO: add album/track validation
-	// TODO: add id parsing so it supports links as well as raw id
+	// TODO: add id parsing so it supports links along with raw id
 
 	vault.Settings.APIendpoint = "https://api.spotify.com/v1"
 	vault.Settings.TokenEndpoint = "https://accounts.spotify.com/api/token"

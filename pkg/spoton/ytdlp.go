@@ -1,4 +1,4 @@
-package ytdlp
+package spoton
 
 type YTdlp struct {
 	Binary         string
@@ -14,3 +14,9 @@ type YTdlp struct {
 	NoProgress   bool
 	NoOverwrites bool
 }
+
+func (a *Album) Download() {
+	// a.toPlaylist().Download() // teehee, might change later
+}
+
+func (p *Playlist) Download() {}

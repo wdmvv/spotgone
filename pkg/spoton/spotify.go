@@ -24,8 +24,10 @@ type Album struct {
 		Height int    `json:"height"`
 		Width  int    `json:"width"`
 	} `json:"images"`
+	Artists []struct {
+		Name string
+	}
 	Release    string `json:"release_date"`
-	Label      string `json:"label"`
 	Popularity int    `json:"popularity"`
 	Tracks     []struct {
 		Artists []struct {
@@ -36,11 +38,6 @@ type Album struct {
 		Disc       int    `json:"disc_number"`
 		Number     int    `json:"track_number"`
 	} `json:"items"`
-}
-
-type Track struct {
-	Album struct {
-	} `json:"album"`
 }
 
 // i couldve used playlistResponse but i dont think thats a good idea
@@ -71,7 +68,7 @@ type PlaylistTrack struct {
 	DurationMs int    `json:"duration_ms"`
 	Disc       int    `json:"disc_number"`
 	Number     int    `json:"track_number"`
-	Popularity int    `json:"popularity"`
+	// Popularity int    `json:"popularity"`
 }
 
 // i have no idea how to do this efficiently so almost same structs /shrug
@@ -234,4 +231,26 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 	}
 
 	return Playlist{pl.Total, tracks}, nil
+}
+
+func (a *Album) ToPlaylist() *Playlist {
+	p := Playlist{a.Total, make([]PlaylistTrack, 0)}
+	for _, j := range a.Tracks {
+
+		pt := PlaylistTrack{}
+		pt.Album.Images = append(pt.Album.Images, a.Images...)
+		pt.Album.Name = a.Name
+		pt.Album.Release = a.Release
+		pt.Album.Artists = []struct {
+			Name string "json:\"name\""
+		}(a.Artists)
+
+		pt.Artists = j.Artists
+		pt.Name = j.Name
+		pt.DurationMs = j.DurationMs
+		pt.Disc = j.Disc
+		pt.Number = j.Number
+		p.Tracks = append(p.Tracks, pt)
+	}
+	return &p
 }
