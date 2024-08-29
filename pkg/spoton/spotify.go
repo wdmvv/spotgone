@@ -31,26 +31,16 @@ type Album struct {
 		Artists []struct {
 			Name string `json:"name"`
 		} `json:"artists"`
-		Name   string `json:"name"`
-		Number int    `json:"track_number"`
-		Disc   int    `json:"disc_number"`
+		Name       string `json:"name"`
+		DurationMs int    `json:"duration_ms"`
+		Disc       int    `json:"disc_number"`
+		Number     int    `json:"track_number"`
 	} `json:"items"`
 }
 
-// TODO: https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 type Track struct {
 	Album struct {
 	} `json:"album"`
-}
-
-// i have no idea how to do this efficiently so almost same structs /shrug
-// this one is for processing response while capital one is for storing tracks only
-// ill see how this turns out to be and maybe will tweak stuff, who knows
-type playlistResponse struct {
-	Total int `json:"total"`
-	Items []struct {
-		Track PlaylistTrack `json:"track"`
-	} `json:"items"`
 }
 
 // i couldve used playlistResponse but i dont think thats a good idea
@@ -77,11 +67,21 @@ type PlaylistTrack struct {
 	Artists []struct {
 		Name string `json:"name"`
 	} `json:"artists"`
-	Disc       int    `json:"disc_number"`
-	DurationMs int    `json:"duration_ms"`
 	Name       string `json:"name"`
+	DurationMs int    `json:"duration_ms"`
+	Disc       int    `json:"disc_number"`
 	Number     int    `json:"track_number"`
 	Popularity int    `json:"popularity"`
+}
+
+// i have no idea how to do this efficiently so almost same structs /shrug
+// this one is for processing response while capital one is for storing tracks only
+// ill see how this turns out to be and maybe will tweak stuff, who knows
+type playlistResponse struct {
+	Total int `json:"total"`
+	Items []struct {
+		Track PlaylistTrack `json:"track"`
+	} `json:"items"`
 }
 
 // this should be in some kind of config but eh
@@ -117,14 +117,14 @@ func (u *User) SetAuth() error {
 	return d.Decode(&u)
 }
 
-// if something's missing then one should set market in request
+// right now no market is set, limited to 50 tracks per album
 func (u *User) GetAlbum(id string) (Album, error) {
 	var a Album
 	if u.AuthToken == "" {
 		return Album{}, &ErrNoAuth{}
 	}
 
-	url := fmt.Sprintf("https://api.spotify.com/v1/albums/%s/tracks", id)
+	url := fmt.Sprintf("https://api.spotify.com/v1/albums/%s/tracks?limit=50", id)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return Album{}, err
