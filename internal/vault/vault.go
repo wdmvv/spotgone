@@ -4,11 +4,12 @@ package vault
 
 // settings but named like this so i do not repeat the name
 type Stgs struct {
-	DownloaderRoutines int
-	APIendpoint        string
-	TokenEndpoint      string
-	Cmd                struct {
+	APIendpoint   string
+	TokenEndpoint string
+	Cmd           struct {
 		Routines int
+		DownPath string
+		YtdlpBin string
 		Type     string
 		ID       string
 	}
