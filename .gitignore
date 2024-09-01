@@ -15,6 +15,7 @@ env.json
 # temp ignore since i am testing stuff
 main.go
 spg
+Downloads
 
 # ignoring ytdlp binaries
 yt-dlp*
