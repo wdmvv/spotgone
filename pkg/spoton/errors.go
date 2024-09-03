@@ -16,3 +16,9 @@ type ErrNoAuth struct{}
 func (e *ErrNoAuth) Error() string {
 	return "auth token is empty - have you called SetAuth previously?"
 }
+
+type ErrNoCmd struct{}
+
+func (e *ErrNoCmd) Error() string {
+	return "failed to find cmd tag in one of the struct fields"
+}

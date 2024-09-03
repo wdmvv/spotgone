@@ -16,7 +16,8 @@ _probably_ ill just go with this option - album is converted to the playlist und
 TODO:<br>
 <ul>
 <li>Make all paths relative to the root and not execution start</li>
-<li>Replace []error with chan error for faster? results<li>
+<li>Reflect stuff to convert to cmd args</li>
+<li>Replace []error with chan error for faster? results</li>
 <li>Add contexts with timeouts to all requests</li>
 <li>ffmpeg & yt-dlp parsing and python aka 2 versions</li>
 <li>metadata inserter</li>
