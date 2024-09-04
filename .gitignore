@@ -16,6 +16,7 @@ env.json
 main.go
 spg
 Downloads
+notes.txt
 
 # ignoring ytdlp binaries
 yt-dlp*

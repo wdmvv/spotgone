@@ -14,32 +14,35 @@ import (
 // fields should already contain formatted keys i.e --some-key <value>
 // cmd: formatted option for ytdlp Binary
 type YTdlp struct {
-	DefaultSearch string `cmd:"--default-search"`
-	Format        string `cmd:"--format"`
-	// wait this does not work as expected?? what do i do
-	Postprocessors map[string]string `cmd:"--postprocessor-args"`
-
-	// Quiet bool
 	// bools are declared in a way that if they are true, then you have to use them in cmd
 	// this way it is a simple if(bool) instead of manual param check
 
 	NoProgress   bool `cmd:"--no-progress"`
 	NoOverwrites bool `cmd:"--no-overwrites"`
+	ExtractAudio bool `cmd:"-x"`
+
+	// search engine
+	DefaultSearch string `cmd:"--default-search"`
+	// search format
+	Format string `cmd:"--format"`
+	// what type should save files be
+	FileType string `cmd:"--audio-format"`
+	// audio quality
+	Quality string `cmd:"--audio-quality"`
 
 	// basically savepath
 	// Outtmpl string `cmd:"--output"`
 }
 
 var ytdlpStg YTdlp = YTdlp{
+	NoProgress:   true,
+	NoOverwrites: true,
+	ExtractAudio: true,
+
 	DefaultSearch: "ytsearch",
 	Format:        "bestaudio/best",
-	Postprocessors: map[string]string{
-		"key":              "FFmpegExtractAudio",
-		"preferredcodec":   "mp3",
-		"preferredquality": "192",
-	},
-	NoProgress:   false,
-	NoOverwrites: true,
+	FileType:      vault.Settings.Cmd.FileType,
+	Quality:       "192k",
 }
 
 var mx sync.Mutex
@@ -50,6 +53,9 @@ func (a *Album) Download() []error {
 }
 
 func (p *Playlist) Download() []error {
+	// TODO: figure out why it does not set itself in var declaration
+	ytdlpStg.FileType = vault.Settings.Cmd.FileType
+
 	errs := make([]error, 0, len(p.Tracks)+1)
 	sem := make(chan struct{}, vault.Settings.Cmd.Routines)
 
@@ -82,7 +88,7 @@ func (p *Playlist) Download() []error {
 }
 
 func (pt *PlaylistTrack) downloadInaccurate() error {
-	args := ytdlpStg.toCmd(pt.Name + vault.Settings.Cmd.Format)
+	args := ytdlpStg.toCmd(pt.Name + "." + vault.Settings.Cmd.FileType)
 	args = append(args, fmt.Sprintf("\"%s - %s\"", pt.ArtistStr(), pt.Name))
 	var cmd *exec.Cmd
 
@@ -111,10 +117,8 @@ func (y *YTdlp) toCmd(output string) []string {
 			if fmt.Sprintf("%v", v.Field(i)) == "true" {
 				out = append(out, cmdstr)
 			}
-		// postprocessor stuff is not supported just yet
 		case reflect.Map:
 			continue
-
 			// tmp := cmdstr + " "
 
 			// iter := v.Field(i).MapRange()
@@ -124,10 +128,11 @@ func (y *YTdlp) toCmd(output string) []string {
 			// out = append(out, tmp)
 		default:
 			out = append(out, cmdstr)
-			out = append(out, fmt.Sprintf("%v", v.Field(i)))
+			out = append(out, fmt.Sprintf("\"%v\"", v.Field(i)))
 		}
 	}
 	out = append(out, "--output")
-	out = append(out, output)
+	out = append(out, fmt.Sprintf("\"%s\"", output))
+	fmt.Println(out)
 	return out
 }
