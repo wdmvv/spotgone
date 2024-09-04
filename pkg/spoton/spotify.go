@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -253,4 +254,12 @@ func (a *Album) ToPlaylist() *Playlist {
 		p.Tracks = append(p.Tracks, pt)
 	}
 	return &p
+}
+
+func (pt *PlaylistTrack) ArtistStr() string {
+	tmp := make([]string, 0)
+	for _, i := range pt.Artists {
+		tmp = append(tmp, i.Name)
+	}
+	return strings.Join(tmp, " ")
 }

@@ -12,6 +12,7 @@ type Stgs struct {
 		YtdlpBin string
 		Type     string
 		ID       string
+		Format   string
 	}
 }
 

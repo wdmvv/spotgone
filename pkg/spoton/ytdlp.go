@@ -3,9 +3,10 @@ package spoton
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"reflect"
+	"runtime"
 	"spg/internal/vault"
-	"strings"
 	"sync"
 )
 
@@ -13,7 +14,6 @@ import (
 // fields should already contain formatted keys i.e --some-key <value>
 // cmd: formatted option for ytdlp Binary
 type YTdlp struct {
-	Binary        string
 	DefaultSearch string `cmd:"--default-search"`
 	Format        string `cmd:"--format"`
 	// wait this does not work as expected?? what do i do
@@ -27,19 +27,18 @@ type YTdlp struct {
 	NoOverwrites bool `cmd:"--no-overwrites"`
 
 	// basically savepath
-	Outtmpl string `cmd:"--output"`
+	// Outtmpl string `cmd:"--output"`
 }
 
 var ytdlpStg YTdlp = YTdlp{
-	Binary:        vault.Settings.Cmd.YtdlpBin,
-	DefaultSearch: "auto",
+	DefaultSearch: "ytsearch",
 	Format:        "bestaudio/best",
 	Postprocessors: map[string]string{
 		"key":              "FFmpegExtractAudio",
 		"preferredcodec":   "mp3",
 		"preferredquality": "192",
 	},
-	NoProgress:   true,
+	NoProgress:   false,
 	NoOverwrites: true,
 }
 
@@ -60,8 +59,6 @@ func (p *Playlist) Download() []error {
 		return errs
 	}
 
-	fmt.Println("DEBUG:", ytdlpStg.toCmd())
-
 	for _, i := range p.Tracks {
 		wg.Add(1)
 		go func(i PlaylistTrack) {
@@ -80,18 +77,30 @@ func (p *Playlist) Download() []error {
 			}
 		}(i)
 	}
-
 	wg.Wait()
 	return errs
 }
 
-// for the future
 func (pt *PlaylistTrack) downloadInaccurate() error {
-	return nil
+	args := ytdlpStg.toCmd(pt.Name + vault.Settings.Cmd.Format)
+	args = append(args, fmt.Sprintf("\"%s - %s\"", pt.ArtistStr(), pt.Name))
+	var cmd *exec.Cmd
+
+	// someone has to test this on windows, works on my machine though
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command(vault.Settings.Cmd.YtdlpBin, args...)
+	} else {
+		cmd = exec.Command("./"+vault.Settings.Cmd.YtdlpBin, args...)
+	}
+	_, err := cmd.Output()
+	return err
 }
 
 // function for converting ytdlp structure into cmd arguments string
-func (y *YTdlp) toCmd() string {
+// output is how output file is going to be named
+// for now it'd be Song.format
+// in the future should add options to the cmd args
+func (y *YTdlp) toCmd(output string) []string {
 	out := make([]string, 0)
 	v := reflect.ValueOf(*y)
 	for i := 0; i < v.NumField(); i++ {
@@ -102,8 +111,8 @@ func (y *YTdlp) toCmd() string {
 			if fmt.Sprintf("%v", v.Field(i)) == "true" {
 				out = append(out, cmdstr)
 			}
+		// postprocessor stuff is not supported just yet
 		case reflect.Map:
-			// since postprocessor stuff is not supported just yet
 			continue
 
 			// tmp := cmdstr + " "
@@ -114,8 +123,11 @@ func (y *YTdlp) toCmd() string {
 			// }
 			// out = append(out, tmp)
 		default:
-			out = append(out, fmt.Sprintf("%s %v", cmdstr, v.Field(i)))
+			out = append(out, cmdstr)
+			out = append(out, fmt.Sprintf("%v", v.Field(i)))
 		}
 	}
-	return strings.Join(out, " ")
+	out = append(out, "--output")
+	out = append(out, output)
+	return out
 }
