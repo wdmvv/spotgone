@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"spg/internal/vault"
 	"strings"
 	"time"
 )
@@ -82,11 +83,6 @@ type playlistResponse struct {
 	} `json:"items"`
 }
 
-// this should be in some kind of config but eh
-var (
-	tokenEndpoint string = "https://accounts.spotify.com/api/token"
-)
-
 // Gets auth token and sets in User struct
 func (u *User) SetAuth() error {
 	auth := fmt.Sprintf("%s:%s", u.ClientID, u.ClientSecret)
@@ -94,7 +90,7 @@ func (u *User) SetAuth() error {
 
 	data := []byte("grant_type=client_credentials")
 
-	req, err := http.NewRequest(http.MethodPost, tokenEndpoint, bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPost, vault.Settings.Net.TokenEndpoint, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -122,8 +118,7 @@ func (u *User) GetAlbum(id string) (Album, error) {
 		return Album{}, &ErrNoAuth{}
 	}
 
-	url := fmt.Sprintf("https://api.spotify.com/v1/albums/%s/tracks?limit=50", id)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, vault.Settings.Net.AlbumTracksRoute(id), nil)
 	if err != nil {
 		return Album{}, err
 	}
@@ -142,8 +137,7 @@ func (u *User) GetAlbum(id string) (Album, error) {
 		return Album{}, err
 	}
 
-	url = fmt.Sprintf("https://api.spotify.com/v1/albums/%s", id)
-	req, err = http.NewRequest(http.MethodGet, url, nil)
+	req, err = http.NewRequest(http.MethodGet, vault.Settings.Net.AlbumInfoRoute(id), nil)
 	if err != nil {
 		return Album{}, err
 	}
@@ -167,10 +161,7 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 		return Playlist{}, &ErrNoAuth{}
 	}
 
-	// yes i couldve used a body for this but why bother? this is not a complex request, just simple math
-	// if this was bigger then i wouldve used struct -> json marshaling and proper body and not nil
-	url := fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks?offset=0&limit=50", id)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, vault.Settings.Net.PlaylistTracksRoute(id, 0, 50), nil)
 	if err != nil {
 		return Playlist{}, err
 	}
@@ -203,9 +194,7 @@ func (u *User) GetPlaylist(id string) (Playlist, error) {
 		for i := 0; i < pl.Total/50+g; i++ {
 			// now that i am reusing code twice (kind of) in two functions i think i shouldve made a function for these requests
 			// but i do not think this would look good or be usable enough or understandable
-			// go go infinite lines file
-			url = fmt.Sprintf("https://api.spotify.com/v1/playlists/%s/tracks?offset=%d&limit=50", id, i*50)
-			req, err := http.NewRequest(http.MethodGet, url, nil)
+			req, err := http.NewRequest(http.MethodGet, vault.Settings.Net.PlaylistTracksRoute(id, i*50, 50), nil)
 			if err != nil {
 				return Playlist{}, err
 			}

@@ -4,11 +4,16 @@
 // but ill leave it as-is for now
 package vault
 
-// settings but named like this so i do not repeat the name
+// settings but named like this so i do not repeat the name and it looks good outise of this file
 type Stgs struct {
-	APIendpoint   string
-	TokenEndpoint string
-	Cmd           struct {
+	Net struct {
+		APIendpoint         string
+		TokenEndpoint       string
+		AlbumTracksRoute    func(string) string
+		AlbumInfoRoute      func(string) string
+		PlaylistTracksRoute func(string, int, int) string
+	}
+	Cmd struct {
 		DownType string
 		DownPath string
 		FileType string
