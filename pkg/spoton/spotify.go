@@ -111,7 +111,7 @@ func (u *User) SetAuth() error {
 	return d.Decode(&u)
 }
 
-// right now no market is set, limited to 50 tracks per album
+// right now no market is set; limited to 50 tracks per album
 func (u *User) GetAlbum(id string) (Album, error) {
 	var a Album
 	if u.AuthToken == "" {

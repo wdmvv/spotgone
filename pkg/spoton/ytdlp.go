@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"reflect"
 	"runtime"
 	"spg/internal/vault"
@@ -12,7 +13,6 @@ import (
 
 // i will be using cmd tag to mark fields that are required as a part of processing
 // fields should already contain formatted keys i.e --some-key <value>
-// cmd: formatted option for ytdlp Binary
 type YTdlp struct {
 	// bools are declared in a way that if they are true, then you have to use them in cmd
 	// this way it is a simple if(bool) instead of manual param check
@@ -29,9 +29,6 @@ type YTdlp struct {
 	FileType string `cmd:"--audio-format"`
 	// audio quality
 	Quality string `cmd:"--audio-quality"`
-
-	// basically savepath
-	// Outtmpl string `cmd:"--output"`
 }
 
 var ytdlpStg YTdlp = YTdlp{
@@ -59,7 +56,7 @@ func (p *Playlist) Download() []error {
 	errs := make([]error, 0, len(p.Tracks)+1)
 	sem := make(chan struct{}, vault.Settings.Cmd.Routines)
 
-	err := os.Mkdir(vault.Settings.Cmd.DownPath, 777)
+	err := os.Mkdir(vault.Settings.Cmd.DownPath, 775)
 	if err != nil && os.IsNotExist(err) {
 		errs = append(errs, err)
 		return errs
@@ -131,8 +128,14 @@ func (y *YTdlp) toCmd(output string) []string {
 			out = append(out, fmt.Sprintf("\"%v\"", v.Field(i)))
 		}
 	}
+
+	// adding this manually otherwise i'd have to check somewhere else
 	out = append(out, "--output")
+
+	// ugly as hell
+	out = append(out,
+		fmt.Sprintf("\".%s%s\"", string(os.PathSeparator), path.Join(".", vault.Settings.Cmd.DownPath, output)))
 	out = append(out, fmt.Sprintf("\"%s\"", output))
-	fmt.Println(out)
+
 	return out
 }

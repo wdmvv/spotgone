@@ -31,6 +31,8 @@ go build && ./spg
 ## TODO
 <ul>
 <li>Make all paths relative to the root and not execution start</li>
+<li>Add some entry point</li>
+<li>Additional post-post processing? (i.e to ogg)</li>
 <li>Replace []error with chan error for faster? results</li>
 <li>Add contexts with timeouts to all requests</li>
 <li>Add output formatting option in cmd args</li>

@@ -14,12 +14,14 @@ type Stgs struct {
 		PlaylistTracksRoute func(string, int, int) string
 	}
 	Cmd struct {
-		DownType string
-		DownPath string
-		FileType string
-		YtdlpBin string
-		Routines int
-		ID       string
+		// 0 album 1 playlist
+		ID          string
+		DownType    int
+		DownTypeRaw string
+		DownPath    string
+		FileType    string
+		YtdlpBin    string
+		Routines    int
 	}
 }
 

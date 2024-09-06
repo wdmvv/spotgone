@@ -13,6 +13,7 @@ env.json
 .DS_Store
 
 # temp ignore since i am testing stuff
+test
 main.go
 spg
 Downloads
